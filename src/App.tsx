@@ -2,9 +2,12 @@ import { useUiChat, exposeComponent } from '@hashbrownai/react'
 import { s } from '@hashbrownai/core'
 import { useState } from 'react'
 import './App.css'
-import Hello from './components/Hello'
+import MarkdownResponse from './components/MarkdownResponse'
 import { useChatTools } from './tools'
 import MapComponent from './components/Map/MapComponent'
+import Cart from './components/Cart'
+import OrderHistory from './components/OrderHistory'
+import { AppProvider } from './context/AppContext'
 
 function App() {
   const [inputValue, setInputValue] = useState('')
@@ -20,10 +23,15 @@ function App() {
     The map shows their food delivery route from the restaurant to their location. Be friendly and informative about delivery updates.`,
     tools,
     components: [
-      exposeComponent(Hello, {
-        name: 'Hello',
-        description: 'This component renders a hello text',
-        props: { data: s.string('md') },
+      exposeComponent(MarkdownResponse, {
+        name: 'MarkdowResponse',
+        description:
+          'This component is for rendering your response text if no other option to respond fits. Its markdown',
+        props: {
+          markdown: s.string(
+            'the markdown text response you want to show the user'
+          ),
+        },
       }),
       exposeComponent(MapComponent, {
         name: 'MapComponent',
@@ -56,7 +64,11 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white relative">
+      <div className="fixed top-4 right-4 flex items-center gap-2 z-50">
+        <OrderHistory />
+        <Cart />
+      </div>
       <div className="w-full max-w-2xl px-4">
         <h1 className="text-6xl font-bold text-center mb-12 text-gray-800">
           Git 'n Grits
@@ -111,4 +123,12 @@ function App() {
   )
 }
 
-export default App
+function AppWrapper() {
+  return (
+    <AppProvider>
+      <App />
+    </AppProvider>
+  )
+}
+
+export default AppWrapper
