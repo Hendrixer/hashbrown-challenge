@@ -5,6 +5,8 @@ import './App.css'
 import Hello from './components/Hello'
 import { useChatTools } from './tools'
 import MapComponent from './components/Map/MapComponent'
+import Cart from './components/Cart'
+import OrderHistory from './components/OrderHistory'
 
 function App() {
   const [inputValue, setInputValue] = useState('')
@@ -35,7 +37,11 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white relative">
+      <div className="fixed top-4 right-4 flex items-center gap-2 z-50">
+        <OrderHistory />
+        <Cart />
+      </div>
       <div className="w-full max-w-2xl px-4">
         <h1 className="text-6xl font-bold text-center mb-12 text-gray-800">
           Git 'n Grits
