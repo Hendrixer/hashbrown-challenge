@@ -1,8 +1,10 @@
 import { useTool } from '@hashbrownai/react'
 import { s } from '@hashbrownai/core'
 import { useAppState } from './context/AppContext'
-import type { CartItem } from './utils/localStorage'
+import type { CartItem, Order } from './utils/localStorage'
+import type { OrderStatus } from './types/orderStatus'
 import { portlandBreakfastRestaurants } from './data/restaurants'
+import { fakeOrders } from './data/orders'
 import OrderDetails from './components/OrderDetails'
 
 export const useChatTools = () => {
@@ -124,7 +126,7 @@ export const useChatTools = () => {
         date: new Date().toISOString().split('T')[0],
         items: cart.items.map((item) => `${item.name} x${item.quantity}`),
         total,
-        status: 'preparing' as const,
+        status: 'preparing' as OrderStatus,
         restaurant: orderRestaurant,
         cartItems: cart.items,
         deliveryAddress,
@@ -139,43 +141,98 @@ export const useChatTools = () => {
     deps: [cart, addOrder, clearCart, getCartTotal],
   })
 
-  const trackOrderTool = useTool({
-    name: 'trackOrder',
-    description: 'Track the status of an order',
-    schema: s.object('trackOrderInput', {
-      orderId: s.string('Order ID to track'),
-    }),
-    handler: async ({ orderId }) => {
-      const order = orders.find((o) => o.id === orderId)
-      if (!order) {
-        return `Order ${orderId} not found`
-      }
+  // const trackOrderTool = useTool({
+  //   name: 'trackOrder',
+  //   description: 'Track the status of an order',
+  //   schema: s.object('trackOrderInput', {
+  //     orderId: s.string('Order ID to track'),
+  //   }),
+  //   handler: async ({ orderId }) => {
+  //     const order = orders.find((o) => o.id === orderId)
+  //     if (!order) {
+  //       return `Order ${orderId} not found`
+  //     }
 
-      const statusMessages = {
-        preparing: 'Your order is being prepared by the restaurant',
-        'in-progress': 'Your order is on the way',
-        delivered: 'Your order has been delivered',
-        cancelled: 'Your order has been cancelled',
-      }
+  //     const statusMessages = {
+  //       preparing: 'Your order is being prepared by the restaurant',
+  //       'on-the-way': 'Your order is on the way',
+  //       delivered: 'Your order has been delivered',
+  //       cancelled: 'Your order has been cancelled',
+  //     }
 
-      return `Order ${orderId} from ${order.restaurant}: ${
-        statusMessages[order.status]
-      }. Items: ${order.items.join(', ')}. Total: $${order.total.toFixed(2)}`
-    },
-    deps: [orders],
-  })
+  //     return `Order ${orderId} from ${order.restaurant}: ${
+  //       statusMessages[order.status]
+  //     }. Items: ${order.items.join(', ')}. Total: $${order.total.toFixed(2)}`
+  //   },
+  //   deps: [orders],
+  // })
 
   const getOrderStatus = useTool({
     name: 'getOrderStatus',
-    description: 'Use this tool if a user asks about the status of their order',
+    description:
+      'Use this tool if a user asks about the status of their order. Shows OrderDetails component if there is an order.  Shows map component only if order status is dispatched, on-the-way, arriving, or delivered.',
     schema: s.object('orderStatus', {
-      orderId: s.string('the unique ID of the order'),
+      orderId: s.anyOf([s.number('the unique ID of the order'), s.nullish()]),
     }),
-    handler: async () => {
-      return {
-        start: [45.5122, -122.6587],
-        destination: [45.5289, -122.6984],
-        status: 'in-progress',
+    handler: async ({ orderId }) => {
+      // Find the order from fake orders data
+      const order = orderId
+        ? fakeOrders.find((o) => o.orderId === orderId)
+        : undefined
+
+      if (!order) {
+        return `No order found${
+          orderId ? ` with ID ${orderId}` : ''
+        }. Please place an order first.`
+      }
+
+      const showMapStatuses: OrderStatus[] = [
+        'dispatched',
+        'on-the-way',
+        'arriving',
+        'delivered',
+      ]
+
+      // Check if the order status warrants showing the map
+      if (showMapStatuses.includes(order.status)) {
+        // Return data that can be used by the map component
+        return {
+          orderId: order.orderId,
+          status: order.status,
+          restaurant: order.restaurantName,
+          start: [
+            order.restaurantLocation.pointA,
+            order.restaurantLocation.pointB,
+          ], // Restaurant location
+          destination: [
+            order.destinationLocation.pointA,
+            order.destinationLocation.pointB,
+          ], // Delivery location
+          message: `Order ${order.orderId} from ${order.restaurantName} is ${order.status}. You can track its progress on the map.`,
+        }
+      } else {
+        // For earlier statuses, just return a text message
+        const statusMessages: Record<OrderStatus, string> = {
+          pending: 'Your order has been received and is being processed',
+          confirmed: 'Your order has been confirmed by the restaurant',
+          preparing: 'Your order is being prepared by the restaurant',
+          ready: 'Your order is ready for pickup',
+          dispatched:
+            'Your driver has picked up your order and will be on the way soon',
+          'on-the-way': 'Your driver is on the way!',
+          arriving: 'Your driver is arriving soon!',
+          delivered: 'Your order has been delivered',
+          cancelled: 'Your order has been cancelled',
+          failed: 'Delivery attempt failed - please contact support',
+          refunded: 'Your order has been refunded',
+        }
+
+        const itemsList = order.orderItems
+          .map((item) => `${item.name} x${item.quantity}`)
+          .join(', ')
+        return `Order ${order.orderId} from ${order.restaurantName}: ${
+          statusMessages[order.status]
+        }. Items: ${itemsList}. Total: $${order.totalAmount.toFixed(2)}`
       }
     },
     deps: [],
@@ -379,7 +436,8 @@ export const useChatTools = () => {
 
   const tripDurationTool = useTool({
     name: 'getTripDuration',
-    description: 'Get the driving duration and distance between two points using the OrderDetails component. This component shows the estimated time and distance for a trip by car.',
+    description:
+      'Get the driving duration and distance between two points using the OrderDetails component. This component shows the estimated time and distance for a trip by car.',
     schema: s.object('getTripDurationInput', {
       pointA: s.object('pointA', {
         lat: s.number('Latitude of the starting point'),
@@ -401,34 +459,37 @@ export const useChatTools = () => {
 
   const trackOrderStatusTool = useTool({
     name: 'trackOrderStatus',
-    description: 'Track order status with delivery location details. Use this when users ask about their order status, delivery tracking, or where their order is.',
+    description:
+      'Track order status with delivery location details. Use this when users ask about their order status, delivery tracking, or where their order is.',
     schema: s.object('trackOrderStatusInput', {
       orderId: s.anyOf([s.string('Order ID to track'), s.nullish()]),
     }),
     handler: async ({ orderId }) => {
       // For now, return mock data with Portland restaurant locations
       // In a real app, you would look up the actual order details from a database
-      
+
       // Sample restaurant location (Rose City Morning from restaurants data)
       const startLocation = {
         lat: 45.5122,
-        long: -122.6587
+        long: -122.6587,
       }
-      
+
       // Sample delivery location (somewhere in Portland)
       const destinationLocation = {
         lat: 45.5289,
-        long: -122.6984
+        long: -122.6984,
       }
-      
+
       return {
         startLatitude: startLocation.lat,
         startLongitude: startLocation.long,
         destinationLatitude: destinationLocation.lat,
         destinationLongitude: destinationLocation.long,
-        status: 'in-progress',
+        status: 'on-the-way' as OrderStatus,
         orderId: orderId || 'ORD-123456',
-        message: `Order ${orderId || 'ORD-123456'} is currently in-progress. Your driver is on the way!`
+        message: `Order ${
+          orderId || 'ORD-123456'
+        } is currently on-the-way. Your driver is on the way!`,
       }
     },
     deps: [],
@@ -443,7 +504,6 @@ export const useChatTools = () => {
     removeFromCartTool,
     updateQuantityTool,
     placeOrderTool,
-    trackOrderTool,
     getCartStatusTool,
     clearCartTool,
     tripDurationTool,

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { FaShoppingCart, FaTrash, FaPlus, FaMinus } from 'react-icons/fa'
 import { useAppState } from '../context/AppContext'
+import type { OrderStatus } from '../types/orderStatus'
 
 export default function Cart() {
   const [isOpen, setIsOpen] = useState(false)
@@ -25,7 +26,7 @@ export default function Cart() {
       date: new Date().toISOString().split('T')[0],
       items: cart.items.map((item) => `${item.name} x${item.quantity}`),
       total,
-      status: 'preparing' as const,
+      status: 'preparing' as OrderStatus,
       restaurant: cart.restaurantName || 'Quick Breakfast',
       cartItems: cart.items,
     }

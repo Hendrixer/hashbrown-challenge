@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import type { OrderStatus } from '../types/orderStatus'
+import { ORDER_STATUS_MESSAGES, ORDER_STATUS_COLORS, ORDER_STATUS_ICONS } from '../types/orderStatus'
 
 type Point = {
   lat: number;
@@ -8,7 +10,7 @@ type Point = {
 type OrderDetailsProps = {
   pointA: Point;
   pointB: Point;
-  status: string;
+  status: OrderStatus;
 }
 
 const apiKey = import.meta.env.VITE_MAPBOX_TOKEN
@@ -96,62 +98,15 @@ const OrderDetails = ({ pointA, pointB, status }: OrderDetailsProps) => {
     return `${miles.toFixed(1)} mi`
   }
 
-  const getStatusMessage = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'preparing':
-        return 'Your order is being prepared by the restaurant'
-      case 'in-progress':
-      case 'on-the-way':
-        return 'Your driver is on the way!'
-      case 'delivered':
-        return 'Your order has been delivered'
-      case 'cancelled':
-        return 'Your order has been cancelled'
-      default:
-        return `Order status: ${status}`
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'preparing':
-        return 'text-yellow-700 bg-yellow-50 border-yellow-200'
-      case 'in-progress':
-      case 'on-the-way':
-        return 'text-blue-700 bg-blue-50 border-blue-200'
-      case 'delivered':
-        return 'text-green-700 bg-green-50 border-green-200'
-      case 'cancelled':
-        return 'text-red-700 bg-red-50 border-red-200'
-      default:
-        return 'text-gray-700 bg-gray-50 border-gray-200'
-    }
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'preparing':
-        return '👨‍🍳'
-      case 'in-progress':
-      case 'on-the-way':
-        return '🚗'
-      case 'delivered':
-        return '✅'
-      case 'cancelled':
-        return '❌'
-      default:
-        return '📦'
-    }
-  }
 
   return (
-    <div className={`border rounded-lg p-4 mb-4 ${getStatusColor(status)}`}>
+    <div className={`border rounded-lg p-4 mb-4 ${ORDER_STATUS_COLORS[status]}`}>
       <h2 className="text-lg font-semibold mb-2">
-        {getStatusIcon(status)} Order Status
+        {ORDER_STATUS_ICONS[status]} Order Status
       </h2>
       
       <p className="mb-3 font-medium">
-        {getStatusMessage(status)}
+        {ORDER_STATUS_MESSAGES[status]}
       </p>
 
       {loading && (
@@ -167,11 +122,11 @@ const OrderDetails = ({ pointA, pointB, status }: OrderDetailsProps) => {
           <p><strong>Distance:</strong> {formatDistance(distance)}</p>
           <p><strong>Estimated delivery time:</strong> {formatDuration(duration)}</p>
           
-          {status.toLowerCase() === 'in-progress' || status.toLowerCase() === 'on-the-way' ? (
+          {(status === 'on-the-way' || status === 'dispatched' || status === 'arriving') ? (
             <p className="mt-2 font-medium">
               🕐 Your food should arrive in approximately {formatDuration(duration)}
             </p>
-          ) : status.toLowerCase() === 'preparing' ? (
+          ) : status === 'preparing' ? (
             <p className="mt-2 font-medium">
               🕐 Estimated total time: {formatDuration(duration + 900)} (including prep time)
             </p>

@@ -40,6 +40,8 @@ export class LocalStorageManager<T> {
   }
 }
 
+import type { OrderStatus } from '../types/orderStatus'
+
 export interface CartItem {
   id: string;
   menuItemId?: string;
@@ -63,9 +65,10 @@ export interface Order {
   date: string;
   items: string[];
   total: number;
-  status: 'delivered' | 'cancelled' | 'in-progress' | 'preparing';
+  status: OrderStatus;
   restaurant: string;
   cartItems?: CartItem[];
+  deliveryAddress?: string;
 }
 
 export const storage = {

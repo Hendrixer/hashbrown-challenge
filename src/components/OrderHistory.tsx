@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { FaHistory } from 'react-icons/fa'
 import { useAppState } from '../context/AppContext'
 import { type Order } from '../utils/localStorage'
+import type { OrderStatus } from '../types/orderStatus'
+import { ORDER_STATUS_COLORS } from '../types/orderStatus'
 
 export default function OrderHistory() {
   const [isOpen, setIsOpen] = useState(false)
@@ -16,30 +18,26 @@ export default function OrderHistory() {
     setIsOpen(false)
   }
 
-  const getStatusColor = (status: Order['status']) => {
-    switch (status) {
-      case 'delivered':
-        return 'text-green-600 bg-green-50'
-      case 'cancelled':
-        return 'text-red-600 bg-red-50'
-      case 'in-progress':
-        return 'text-blue-600 bg-blue-50'
-      case 'preparing':
-        return 'text-yellow-600 bg-yellow-50'
-    }
+  const getStatusColor = (status: OrderStatus) => {
+    return ORDER_STATUS_COLORS[status] || 'text-gray-600 bg-gray-50'
   }
 
-  const getStatusText = (status: Order['status']) => {
-    switch (status) {
-      case 'delivered':
-        return 'Delivered'
-      case 'cancelled':
-        return 'Cancelled'
-      case 'in-progress':
-        return 'In Progress'
-      case 'preparing':
-        return 'Preparing'
+  const getStatusText = (status: OrderStatus) => {
+    // Convert from verbose message to short display text
+    const shortTexts: Record<OrderStatus, string> = {
+      pending: 'Pending',
+      confirmed: 'Confirmed', 
+      preparing: 'Preparing',
+      ready: 'Ready',
+      dispatched: 'Dispatched',
+      'on-the-way': 'On the Way',
+      arriving: 'Arriving',
+      delivered: 'Delivered',
+      cancelled: 'Cancelled',
+      failed: 'Failed',
+      refunded: 'Refunded'
     }
+    return shortTexts[status] || status
   }
 
   return (

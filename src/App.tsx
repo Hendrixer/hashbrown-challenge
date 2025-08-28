@@ -62,7 +62,7 @@ function App() {
             lat: s.number('latitude of the delivery location'),
             long: s.number('longitude of the delivery location'),
           }),
-          status: s.string('Order status: preparing, in-progress, on-the-way, delivered, or cancelled'),
+          status: s.enumeration('Order status', ['pending', 'confirmed', 'preparing', 'ready', 'dispatched', 'on-the-way', 'arriving', 'delivered', 'cancelled', 'failed', 'refunded']),
         },
       }),
     ],
@@ -117,7 +117,7 @@ function App() {
             placeholder="Ask about your order status..."
           />
         </form>
-        {message ? <div className="assistant">{message.ui}</div> : null}
+        {message ? <div className="assistant mx-auto max-w-[80vw] flex-col justify-center items-center mt-8">{message.ui}</div> : null}
       </div>
     </div>
   )

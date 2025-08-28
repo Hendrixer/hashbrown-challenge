@@ -62,8 +62,12 @@ const MapComponent = ({ pointA, pointB }: MapComponentProps) => {
   }), [pointA, pointB])
 
   return (
-    <div>
-      <div className="w-[75vw] h-screen p-5 bg-gray-100">
+    <div className="w-full flex justify-center">
+      <div className="w-full max-w-full bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+        <div className="bg-gradient-to-r from-blue-500 to-green-500 text-white p-4">
+          <h3 className="text-lg font-semibold">🚚 Delivery Route</h3>
+          <p className="text-sm opacity-90">Track your order from restaurant to your location</p>
+        </div>
         <Map
           mapboxAccessToken={apiKey}
           initialViewState={{
@@ -71,24 +75,40 @@ const MapComponent = ({ pointA, pointB }: MapComponentProps) => {
             latitude: centerLat,
             zoom: zoom
           }}
-          style={{ width: '75vw', height: 400 }}
-          mapStyle="mapbox://styles/mapbox/streets-v9"
+          style={{ width: '100%', height: 400 }}
+          mapStyle="mapbox://styles/mapbox/streets-v12"
         >
           <NavigationControl position="bottom-right" />
           
-          {/* Pickup point marker */}
+          {/* Pickup point marker (Restaurant) */}
           <Marker
             longitude={pointA.long}
             latitude={pointA.lat}
-            color="green"
-          />
+          >
+            <div className="flex flex-col items-center">
+              <div className="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg border-2 border-white">
+                🏪
+              </div>
+              <div className="bg-white text-xs px-2 py-1 rounded shadow-md font-medium text-green-700 mt-1">
+                Restaurant
+              </div>
+            </div>
+          </Marker>
           
           {/* Delivery point marker */}
           <Marker
             longitude={pointB.long}
             latitude={pointB.lat}
-            color="red"
-          />
+          >
+            <div className="flex flex-col items-center">
+              <div className="bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg border-2 border-white">
+                📍
+              </div>
+              <div className="bg-white text-xs px-2 py-1 rounded shadow-md font-medium text-red-700 mt-1">
+                Delivery
+              </div>
+            </div>
+          </Marker>
           
           {/* Route line */}
           <Source type="geojson" data={route}>
