@@ -8,19 +8,25 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "server": "node server/index.js"
+    "server": "node server/index.js --watch"
   },
   "dependencies": {
+    "@hashbrownai/core": "^0.2.3",
     "@hashbrownai/openai": "^0.2.3",
+    "@hashbrownai/react": "^0.2.3",
+    "@tailwindcss/vite": "^4.1.12",
     "@types/express": "^5.0.3",
     "@types/mapbox-gl": "^3.4.1",
     "@types/node": "^24.3.0",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "mapbox-gl": "^3.14.0",
+    "react-map-gl": "^8.0.4",
+    "morgan": "^1.10.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-map-gl": "^8.0.4",
+    "tailwindcss": "^4.1.12",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2"
   },
