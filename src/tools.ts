@@ -3,6 +3,7 @@ import { s } from '@hashbrownai/core'
 import { useAppState } from './context/AppContext'
 import type { CartItem } from './utils/localStorage'
 import { portlandBreakfastRestaurants } from './data/restaurants'
+import OrderDetails from './components/OrderDetails'
 
 export const useChatTools = () => {
   const {
@@ -376,6 +377,63 @@ export const useChatTools = () => {
     deps: [],
   })
 
+  const tripDurationTool = useTool({
+    name: 'getTripDuration',
+    description: 'Get the driving duration and distance between two points using the OrderDetails component. This component shows the estimated time and distance for a trip by car.',
+    schema: s.object('getTripDurationInput', {
+      pointA: s.object('pointA', {
+        lat: s.number('Latitude of the starting point'),
+        long: s.number('Longitude of the starting point'),
+      }),
+      pointB: s.object('pointB', {
+        lat: s.number('Latitude of the destination point'),
+        long: s.number('Longitude of the destination point'),
+      }),
+    }),
+    handler: async ({ pointA, pointB }) => {
+      return {
+        component: OrderDetails,
+        props: { pointA, pointB },
+      }
+    },
+    deps: [],
+  })
+
+  const trackOrderStatusTool = useTool({
+    name: 'trackOrderStatus',
+    description: 'Track order status with delivery location details. Use this when users ask about their order status, delivery tracking, or where their order is.',
+    schema: s.object('trackOrderStatusInput', {
+      orderId: s.anyOf([s.string('Order ID to track'), s.nullish()]),
+    }),
+    handler: async ({ orderId }) => {
+      // For now, return mock data with Portland restaurant locations
+      // In a real app, you would look up the actual order details from a database
+      
+      // Sample restaurant location (Rose City Morning from restaurants data)
+      const startLocation = {
+        lat: 45.5122,
+        long: -122.6587
+      }
+      
+      // Sample delivery location (somewhere in Portland)
+      const destinationLocation = {
+        lat: 45.5289,
+        long: -122.6984
+      }
+      
+      return {
+        startLatitude: startLocation.lat,
+        startLongitude: startLocation.long,
+        destinationLatitude: destinationLocation.lat,
+        destinationLongitude: destinationLocation.long,
+        status: 'in-progress',
+        orderId: orderId || 'ORD-123456',
+        message: `Order ${orderId || 'ORD-123456'} is currently in-progress. Your driver is on the way!`
+      }
+    },
+    deps: [],
+  })
+
   return [
     getOrderStatus,
     browseRestaurantsTool,
@@ -388,5 +446,7 @@ export const useChatTools = () => {
     trackOrderTool,
     getCartStatusTool,
     clearCartTool,
+    tripDurationTool,
+    trackOrderStatusTool,
   ]
 }

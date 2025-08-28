@@ -5,6 +5,7 @@ import './App.css'
 import MarkdownResponse from './components/MarkdownResponse'
 import { useChatTools } from './tools'
 import MapComponent from './components/Map/MapComponent'
+import OrderDetails from './components/OrderDetails'
 import Cart from './components/Cart'
 import OrderHistory from './components/OrderHistory'
 import { AppProvider } from './context/AppContext'
@@ -46,6 +47,22 @@ function App() {
             lat: s.number('latitude of the destination location'),
             long: s.number('longitude of the destination location'),
           }),
+        },
+      }),
+      exposeComponent(OrderDetails, {
+        name: 'OrderDetails',
+        description:
+          'Display order status information with delivery time estimates. Use this when users ask about their order status or delivery timeline.',
+        props: {
+          pointA: s.object('starting point (restaurant) latitude and longitude', {
+            lat: s.number('latitude of the restaurant location'),
+            long: s.number('longitude of the restaurant location'),
+          }),
+          pointB: s.object('destination (delivery) latitude and longitude', {
+            lat: s.number('latitude of the delivery location'),
+            long: s.number('longitude of the delivery location'),
+          }),
+          status: s.string('Order status: preparing, in-progress, on-the-way, delivered, or cancelled'),
         },
       }),
     ],

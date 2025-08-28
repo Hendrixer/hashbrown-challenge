@@ -44,9 +44,9 @@ export interface CartItem {
   id: string;
   menuItemId?: string;
   name: string;
-  description?: string;
+  description?: string | null;
   price: number;
-  category?: string;
+  category?: string | null;
   quantity: number;
   customizations?: string[];
   image?: string;

@@ -63,14 +63,6 @@ const MapComponent = ({ pointA, pointB }: MapComponentProps) => {
 
   return (
     <div>
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-        <h2 className="text-lg font-semibold text-blue-800 mb-2">
-          📍 Delivery Route
-        </h2>
-        <p className="text-blue-700">
-          Here's the route from pickup to delivery:
-        </p>
-      </div>
       <div className="w-[75vw] h-screen p-5 bg-gray-100">
         <Map
           mapboxAccessToken={apiKey}
