@@ -68,7 +68,6 @@ function App() {
           />
         </form>
         {message ? <div className="assistant">{message.ui}</div> : null}
-        <MapComponent />
       </div>
     </div>
   )
