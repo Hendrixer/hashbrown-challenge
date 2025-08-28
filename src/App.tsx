@@ -24,6 +24,7 @@ function App() {
     tools,
     components: [
       exposeComponent(MarkdownResponse, {
+        children: 'any',
         name: 'MarkdowResponse',
         description:
           'This component is for rendering your response text if no other option to respond fits. Its markdown',
