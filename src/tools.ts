@@ -4,6 +4,7 @@ import MapComponent from './components/Map/MapComponent'
 import { s } from '@hashbrownai/core'
 import { useAppState } from './context/AppContext'
 import type { CartItem } from './utils/localStorage'
+import { portlandBreakfastRestaurants } from './data/restaurants'
 
 export const useChatTools = () => {
   const {
@@ -21,24 +22,38 @@ export const useChatTools = () => {
     name: 'addToCart',
     description: 'Add an item to the shopping cart',
     schema: s.object('addToCartInput', {
+      id: s.string('Menu item ID from restaurant data'),
       name: s.string('Name of the item'),
+      description: s.anyOf([s.string('Description of the item'), s.nullish()]),
       price: s.number('Price of the item'),
+      category: s.anyOf([s.string('Category of the item'), s.nullish()]),
       quantity: s.anyOf([s.number('Quantity to add'), s.nullish()]),
       customizations: s.anyOf([
         s.array('customizations', s.string('customization')),
         s.nullish(),
       ]),
     }),
-    handler: async ({ name, price, quantity, customizations }) => {
+    handler: async ({
+      id,
+      name,
+      description,
+      price,
+      category,
+      quantity,
+      customizations,
+    }) => {
       const item: CartItem = {
-        id: `item-${Date.now()}-${Math.random()}`,
+        id: `cart-${id}-${Date.now()}`,
+        menuItemId: id,
         name,
+        description,
         price,
+        category,
         quantity: quantity || 1,
         customizations: customizations || [],
       }
       addToCart(item)
-      return `Added ${quantity} x ${name} to cart`
+      return `Added ${quantity || 1} x ${name} to cart`
     },
     deps: [addToCart],
   })
@@ -90,6 +105,20 @@ export const useChatTools = () => {
         return 'Cannot place order - cart is empty'
       }
 
+      // Try to determine restaurant from cart items
+      let orderRestaurant =
+        restaurantName || cart.restaurantName || 'Quick Breakfast'
+
+      if (!restaurantName && cart.items[0]?.menuItemId) {
+        const menuItemId = cart.items[0].menuItemId
+        const restaurant = portlandBreakfastRestaurants.find((r) =>
+          r.menuItems.some((item) => item.id === menuItemId)
+        )
+        if (restaurant) {
+          orderRestaurant = restaurant.name
+        }
+      }
+
       const { total } = getCartTotal()
       const order = {
         id: `ORD-${Date.now()}`,
@@ -97,7 +126,7 @@ export const useChatTools = () => {
         items: cart.items.map((item) => `${item.name} x${item.quantity}`),
         total,
         status: 'preparing' as const,
-        restaurant: restaurantName || 'Quick Breakfast',
+        restaurant: orderRestaurant,
         cartItems: cart.items,
         deliveryAddress,
       }
@@ -106,7 +135,7 @@ export const useChatTools = () => {
       clearCart()
       return `Order ${order.id} placed successfully! Total: $${total.toFixed(
         2
-      )}. Delivery to: ${deliveryAddress}`
+      )}. Delivery to: ${deliveryAddress}. Restaurant: ${orderRestaurant}`
     },
     deps: [cart, addOrder, clearCart, getCartTotal],
   })
@@ -180,16 +209,163 @@ export const useChatTools = () => {
     deps: [cart, clearCart],
   })
 
-  const showOrderStatus = useTool({
-    name: 'showOrderStatus',
-    description: 'Show the users order status with delivery route map when they ask about their order status or delivery tracking',
-    handler: async () => {
-      return React.createElement(MapComponent)
+  const browseRestaurantsTool = useTool({
+    name: 'browseRestaurants',
+    description:
+      'Browse available restaurants with optional filtering by rating, price level, or location',
+    schema: s.object('browseRestaurantsInput', {
+      minRating: s.anyOf([s.number('Minimum rating (1-5)'), s.nullish()]),
+      maxPriceLevel: s.anyOf([
+        s.number('Maximum price level (1-4, where 1=$ and 4=$$$$)'),
+        s.nullish(),
+      ]),
+      limit: s.anyOf([
+        s.number('Maximum number of restaurants to return'),
+        s.nullish(),
+      ]),
+    }),
+    handler: async ({ minRating, maxPriceLevel, limit }) => {
+      let filteredRestaurants = portlandBreakfastRestaurants
+
+      if (minRating) {
+        filteredRestaurants = filteredRestaurants.filter(
+          (r) => r.rating >= minRating
+        )
+      }
+
+      if (maxPriceLevel) {
+        filteredRestaurants = filteredRestaurants.filter(
+          (r) => r.priceLevel <= maxPriceLevel
+        )
+      }
+
+      const restaurants = filteredRestaurants
+        .slice(0, limit || 10)
+        .map((r) => ({
+          id: r.id,
+          name: r.name,
+          description: r.description,
+          rating: r.rating,
+          priceLevel: '$'.repeat(r.priceLevel),
+          address: r.address,
+          phone: r.phone,
+        }))
+
+      return `Found ${restaurants.length} restaurants:\n\n${restaurants
+        .map(
+          (r) =>
+            `${r.id}. **${r.name}** (${r.rating}⭐, ${r.priceLevel})\n   ${r.description}\n   📍 ${r.address}\n   📞 ${r.phone}`
+        )
+        .join('\n\n')}`
+    },
+    deps: [],
+  })
+
+  const getRestaurantMenuTool = useTool({
+    name: 'getRestaurantMenu',
+    description: 'Get the full menu for a specific restaurant by ID',
+    schema: s.object('getRestaurantMenuInput', {
+      restaurantId: s.number('The restaurant ID'),
+      category: s.anyOf([
+        s.string(
+          'Optional category filter: Pancakes & Waffles, Eggs & Benedicts, Pastries & Baked Goods, Sandwiches & Wraps, Beverages, Sides'
+        ),
+        s.nullish(),
+      ]),
+    }),
+    handler: async ({ restaurantId, category }) => {
+      const restaurant = portlandBreakfastRestaurants.find(
+        (r) => r.id === restaurantId
+      )
+
+      if (!restaurant) {
+        return `Restaurant with ID ${restaurantId} not found`
+      }
+
+      let menuItems = restaurant.menuItems
+      if (category) {
+        menuItems = menuItems.filter((item) => item.category === category)
+      }
+
+      const menu = menuItems
+        .map(
+          (item) =>
+            `**${item.name}** - $${item.price.toFixed(2)}\n   ID: ${
+              item.id
+            } | Category: ${item.category}\n   ${item.description}`
+        )
+        .join('\n\n')
+
+      return `**${restaurant.name}** Menu${
+        category ? ` - ${category}` : ''
+      }:\n\n${menu}`
+    },
+    deps: [],
+  })
+
+  const searchMenuItemsTool = useTool({
+    name: 'searchMenuItems',
+    description:
+      'Search for menu items across all restaurants by name or description',
+    schema: s.object('searchMenuItemsInput', {
+      query: s.string('Search query for menu item name or description'),
+      maxPrice: s.anyOf([s.number('Maximum price filter'), s.nullish()]),
+      category: s.anyOf([s.string('Category filter'), s.nullish()]),
+      limit: s.anyOf([
+        s.number('Maximum number of items to return'),
+        s.nullish(),
+      ]),
+    }),
+    handler: async ({ query, maxPrice, category, limit }) => {
+      const allItems = portlandBreakfastRestaurants.flatMap((restaurant) =>
+        restaurant.menuItems.map((item) => ({
+          ...item,
+          restaurantId: restaurant.id,
+          restaurantName: restaurant.name,
+          restaurantRating: restaurant.rating,
+          restaurantPriceLevel: restaurant.priceLevel,
+        }))
+      )
+
+      let filteredItems = allItems.filter(
+        (item) =>
+          item.name.toLowerCase().includes(query.toLowerCase()) ||
+          item.description.toLowerCase().includes(query.toLowerCase())
+      )
+
+      if (maxPrice) {
+        filteredItems = filteredItems.filter((item) => item.price <= maxPrice)
+      }
+
+      if (category) {
+        filteredItems = filteredItems.filter(
+          (item) => item.category === category
+        )
+      }
+
+      const results = filteredItems
+        .slice(0, limit || 10)
+        .map(
+          (item) =>
+            `**${item.name}** - $${item.price.toFixed(2)}\n   ID: ${
+              item.id
+            } | From: ${item.restaurantName} (${
+              item.restaurantRating
+            }⭐)\n   Category: ${item.category}\n   ${item.description}`
+        )
+        .join('\n\n')
+
+      return filteredItems.length > 0
+        ? `Found ${filteredItems.length} items matching "${query}":\n\n${results}`
+        : `No menu items found matching "${query}"`
     },
     deps: [],
   })
 
   return [
+    browseRestaurantsTool,
+    getRestaurantMenuTool,
+    searchMenuItemsTool,
     addToCartTool,
     removeFromCartTool,
     updateQuantityTool,
@@ -197,6 +373,5 @@ export const useChatTools = () => {
     trackOrderTool,
     getCartStatusTool,
     clearCartTool,
-    showOrderStatus,
   ]
 }

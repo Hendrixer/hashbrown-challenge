@@ -1,31 +1,39 @@
-import { useState } from 'react';
-import { FaShoppingCart, FaTrash, FaPlus, FaMinus } from 'react-icons/fa';
-import { useAppState } from '../context/AppContext';
+import { useState } from 'react'
+import { FaShoppingCart, FaTrash, FaPlus, FaMinus } from 'react-icons/fa'
+import { useAppState } from '../context/AppContext'
 
 export default function Cart() {
-  const [isOpen, setIsOpen] = useState(false);
-  const { cart, removeFromCart, updateCartItemQuantity, getCartTotal, getCartItemCount, clearCart, addOrder } = useAppState();
-  
-  const { subtotal, tax, delivery, total } = getCartTotal();
-  const itemCount = getCartItemCount();
+  const [isOpen, setIsOpen] = useState(false)
+  const {
+    cart,
+    removeFromCart,
+    updateCartItemQuantity,
+    getCartTotal,
+    getCartItemCount,
+    clearCart,
+    addOrder,
+  } = useAppState()
+
+  const { subtotal, tax, delivery, total } = getCartTotal()
+  const itemCount = getCartItemCount()
 
   const handleCheckout = () => {
-    if (cart.items.length === 0) return;
-    
+    if (cart.items.length === 0) return
+
     const order = {
       id: `ORD-${Date.now()}`,
       date: new Date().toISOString().split('T')[0],
-      items: cart.items.map(item => `${item.name} x${item.quantity}`),
+      items: cart.items.map((item) => `${item.name} x${item.quantity}`),
       total,
       status: 'preparing' as const,
       restaurant: cart.restaurantName || 'Quick Breakfast',
-      cartItems: cart.items
-    };
-    
-    addOrder(order);
-    clearCart();
-    setIsOpen(false);
-  };
+      cartItems: cart.items,
+    }
+
+    addOrder(order)
+    clearCart()
+    setIsOpen(false)
+  }
 
   return (
     <div className="relative">
@@ -46,7 +54,7 @@ export default function Cart() {
           <div className="p-4 border-b border-gray-200">
             <h3 className="text-lg font-semibold">Your Cart</h3>
           </div>
-          
+
           <div className="max-h-96 overflow-y-auto">
             {cart.items.length === 0 ? (
               <div className="p-8 text-center text-gray-500">
@@ -54,7 +62,10 @@ export default function Cart() {
               </div>
             ) : (
               cart.items.map((item) => (
-                <div key={item.id} className="p-4 border-b border-gray-100 hover:bg-gray-50">
+                <div
+                  key={item.id}
+                  className="p-4 border-b border-gray-100 hover:bg-gray-50"
+                >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <h4 className="font-medium">{item.name}</h4>
@@ -65,14 +76,20 @@ export default function Cart() {
                       )}
                       <div className="flex items-center gap-2 mt-2">
                         <button
-                          onClick={() => updateCartItemQuantity(item.id, item.quantity - 1)}
+                          onClick={() =>
+                            updateCartItemQuantity(item.id, item.quantity - 1)
+                          }
                           className="p-1 hover:bg-gray-200 rounded"
                         >
                           <FaMinus className="text-xs" />
                         </button>
-                        <span className="text-sm font-medium px-2">{item.quantity}</span>
+                        <span className="text-sm font-medium px-2">
+                          {item.quantity}
+                        </span>
                         <button
-                          onClick={() => updateCartItemQuantity(item.id, item.quantity + 1)}
+                          onClick={() =>
+                            updateCartItemQuantity(item.id, item.quantity + 1)
+                          }
                           className="p-1 hover:bg-gray-200 rounded"
                         >
                           <FaPlus className="text-xs" />
@@ -85,7 +102,9 @@ export default function Cart() {
                         </button>
                       </div>
                     </div>
-                    <p className="font-medium ml-4">${(item.price * item.quantity).toFixed(2)}</p>
+                    <p className="font-medium ml-4">
+                      ${(item.price * item.quantity).toFixed(2)}
+                    </p>
                   </div>
                 </div>
               ))
@@ -111,7 +130,7 @@ export default function Cart() {
                 <span>${total.toFixed(2)}</span>
               </div>
             </div>
-            <button 
+            <button
               onClick={handleCheckout}
               disabled={cart.items.length === 0}
               className="w-full mt-4 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
@@ -122,5 +141,5 @@ export default function Cart() {
         </div>
       )}
     </div>
-  );
+  )
 }

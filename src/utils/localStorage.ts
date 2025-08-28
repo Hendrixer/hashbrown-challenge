@@ -42,8 +42,11 @@ export class LocalStorageManager<T> {
 
 export interface CartItem {
   id: string;
+  menuItemId?: string;
   name: string;
+  description?: string;
   price: number;
+  category?: string;
   quantity: number;
   customizations?: string[];
   image?: string;
