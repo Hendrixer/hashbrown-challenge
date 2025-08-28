@@ -4,6 +4,7 @@ import { useState } from 'react'
 import './App.css'
 import Hello from './components/Hello'
 import { useChatTools } from './tools'
+import MapComponent from './components/Map/MapComponent'
 
 function App() {
   const [inputValue, setInputValue] = useState('')
@@ -67,6 +68,7 @@ function App() {
           />
         </form>
         {message ? <div className="assistant">{message.ui}</div> : null}
+        <MapComponent />
       </div>
     </div>
   )
