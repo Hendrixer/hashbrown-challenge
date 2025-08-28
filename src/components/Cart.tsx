@@ -1,26 +1,31 @@
 import { useState } from 'react';
-import { FaShoppingCart } from 'react-icons/fa';
-
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  customizations?: string[];
-}
+import { FaShoppingCart, FaTrash, FaPlus, FaMinus } from 'react-icons/fa';
+import { useAppState } from '../context/AppContext';
 
 export default function Cart() {
   const [isOpen, setIsOpen] = useState(false);
+  const { cart, removeFromCart, updateCartItemQuantity, getCartTotal, getCartItemCount, clearCart, addOrder } = useAppState();
   
-  const mockCartItems: CartItem[] = [
-    { id: '1', name: 'Pancakes', price: 8.99, quantity: 2, customizations: ['Extra syrup'] },
-    { id: '2', name: 'Coffee', price: 3.49, quantity: 1 },
-    { id: '3', name: 'Bacon & Eggs', price: 12.99, quantity: 1, customizations: ['Over easy', 'Crispy bacon'] }
-  ];
+  const { subtotal, tax, delivery, total } = getCartTotal();
+  const itemCount = getCartItemCount();
 
-  const subtotal = mockCartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const tax = subtotal * 0.08;
-  const total = subtotal + tax + 3.99;
+  const handleCheckout = () => {
+    if (cart.items.length === 0) return;
+    
+    const order = {
+      id: `ORD-${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      items: cart.items.map(item => `${item.name} x${item.quantity}`),
+      total,
+      status: 'preparing' as const,
+      restaurant: cart.restaurantName || 'Quick Breakfast',
+      cartItems: cart.items
+    };
+    
+    addOrder(order);
+    clearCart();
+    setIsOpen(false);
+  };
 
   return (
     <div className="relative">
@@ -29,9 +34,9 @@ export default function Cart() {
         className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
       >
         <FaShoppingCart className="text-2xl text-gray-700" />
-        {mockCartItems.length > 0 && (
+        {itemCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-            {mockCartItems.reduce((acc, item) => acc + item.quantity, 0)}
+            {itemCount}
           </span>
         )}
       </button>
@@ -43,22 +48,48 @@ export default function Cart() {
           </div>
           
           <div className="max-h-96 overflow-y-auto">
-            {mockCartItems.map((item) => (
-              <div key={item.id} className="p-4 border-b border-gray-100 hover:bg-gray-50">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h4 className="font-medium">{item.name}</h4>
-                    {item.customizations && (
-                      <p className="text-sm text-gray-500 mt-1">
-                        {item.customizations.join(', ')}
-                      </p>
-                    )}
-                    <p className="text-sm text-gray-600 mt-1">Qty: {item.quantity}</p>
-                  </div>
-                  <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
-                </div>
+            {cart.items.length === 0 ? (
+              <div className="p-8 text-center text-gray-500">
+                Your cart is empty
               </div>
-            ))}
+            ) : (
+              cart.items.map((item) => (
+                <div key={item.id} className="p-4 border-b border-gray-100 hover:bg-gray-50">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className="font-medium">{item.name}</h4>
+                      {item.customizations && (
+                        <p className="text-sm text-gray-500 mt-1">
+                          {item.customizations.join(', ')}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 mt-2">
+                        <button
+                          onClick={() => updateCartItemQuantity(item.id, item.quantity - 1)}
+                          className="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <FaMinus className="text-xs" />
+                        </button>
+                        <span className="text-sm font-medium px-2">{item.quantity}</span>
+                        <button
+                          onClick={() => updateCartItemQuantity(item.id, item.quantity + 1)}
+                          className="p-1 hover:bg-gray-200 rounded"
+                        >
+                          <FaPlus className="text-xs" />
+                        </button>
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="ml-auto p-1 hover:bg-red-100 rounded text-red-500"
+                        >
+                          <FaTrash className="text-xs" />
+                        </button>
+                      </div>
+                    </div>
+                    <p className="font-medium ml-4">${(item.price * item.quantity).toFixed(2)}</p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           <div className="p-4 border-t border-gray-200">
@@ -73,14 +104,18 @@ export default function Cart() {
               </div>
               <div className="flex justify-between">
                 <span>Delivery</span>
-                <span>$3.99</span>
+                <span>${delivery.toFixed(2)}</span>
               </div>
               <div className="flex justify-between font-semibold text-base pt-2 border-t">
                 <span>Total</span>
                 <span>${total.toFixed(2)}</span>
               </div>
             </div>
-            <button className="w-full mt-4 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <button 
+              onClick={handleCheckout}
+              disabled={cart.items.length === 0}
+              className="w-full mt-4 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
               Checkout
             </button>
           </div>

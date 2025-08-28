@@ -2,24 +2,31 @@ import { useUiChat, exposeComponent } from '@hashbrownai/react'
 import { s } from '@hashbrownai/core'
 import { useState } from 'react'
 import './App.css'
-import Hello from './components/Hello'
+import MarkdownResponse from './components/MarkdownResponse'
 import { useChatTools } from './tools'
 import MapComponent from './components/Map/MapComponent'
 import Cart from './components/Cart'
 import OrderHistory from './components/OrderHistory'
+import { AppProvider } from './context/AppContext'
 
 function App() {
   const [inputValue, setInputValue] = useState('')
   const tools = useChatTools()
   const chat = useUiChat({
     model: 'gpt-4.1',
-    system: 'Be helpful and use your tools outputs to help the user.',
+    system:
+      'You are a breakfast ordering assistant. Help users order breakfast items, manage their cart, and track orders. Be friendly and helpful!',
     tools,
     components: [
-      exposeComponent(Hello, {
-        name: 'Hello',
-        description: 'This component renders a hello text',
-        props: { data: s.string('md') },
+      exposeComponent(MarkdownResponse, {
+        name: 'MarkdowResponse',
+        description:
+          'This component is for rendering your response text if no other option to respond fits. Its markdown',
+        props: {
+          markdown: s.string(
+            'the markdown text response you want to show the user'
+          ),
+        },
       }),
     ],
   })
@@ -79,4 +86,12 @@ function App() {
   )
 }
 
-export default App
+function AppWrapper() {
+  return (
+    <AppProvider>
+      <App />
+    </AppProvider>
+  )
+}
+
+export default AppWrapper
