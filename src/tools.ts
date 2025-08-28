@@ -24,14 +24,11 @@ export const useChatTools = () => {
     schema: s.object('addToCartInput', {
       id: s.string('Menu item ID from restaurant data'),
       name: s.string('Name of the item'),
-      description: s.anyOf([s.string('Description of the item'), s.nullish()]),
+      description: s.string('Description of the item'),
       price: s.number('Price of the item'),
-      category: s.anyOf([s.string('Category of the item'), s.nullish()]),
-      quantity: s.anyOf([s.number('Quantity to add'), s.nullish()]),
-      customizations: s.anyOf([
-        s.array('customizations', s.string('customization')),
-        s.nullish(),
-      ]),
+      category: s.string('Category of the item'),
+      quantity: s.number('Quantity to add'),
+      customizations: s.array('customizations', s.string('customization')),
     }),
     handler: async ({
       id,
