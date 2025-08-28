@@ -1,6 +1,4 @@
 import { useTool } from '@hashbrownai/react'
-import React from 'react'
-import MapComponent from './components/Map/MapComponent'
 import { s } from '@hashbrownai/core'
 import { useAppState } from './context/AppContext'
 import type { CartItem } from './utils/localStorage'
@@ -164,6 +162,22 @@ export const useChatTools = () => {
       }. Items: ${order.items.join(', ')}. Total: $${order.total.toFixed(2)}`
     },
     deps: [orders],
+  })
+
+  const getOrderStatus = useTool({
+    name: 'getOrderStatus',
+    description: 'Use this tool if a user asks about the status of their order',
+    schema: s.object('orderStatus', {
+      orderId: s.string('the unique ID of the order'),
+    }),
+    handler: async () => {
+      return {
+        start: [45.5122, -122.6587],
+        destination: [45.5289, -122.6984],
+        status: 'in-progress',
+      }
+    },
+    deps: [],
   })
 
   const getCartStatusTool = useTool({
@@ -363,6 +377,7 @@ export const useChatTools = () => {
   })
 
   return [
+    getOrderStatus,
     browseRestaurantsTool,
     getRestaurantMenuTool,
     searchMenuItemsTool,

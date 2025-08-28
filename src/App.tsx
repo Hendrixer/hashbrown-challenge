@@ -11,7 +11,6 @@ import { AppProvider } from './context/AppContext'
 
 function App() {
   const [inputValue, setInputValue] = useState('')
-  const [showMap, setShowMap] = useState(false)
   const tools = useChatTools()
   const chat = useUiChat({
     model: 'gpt-4.1',
@@ -36,8 +35,18 @@ function App() {
       }),
       exposeComponent(MapComponent, {
         name: 'MapComponent',
-        description: 'Show a map with delivery route when user asks about order status, delivery tracking, or where their order is',
-        props: {},
+        description:
+          'Show a map with delivery route when user asks about order status, delivery tracking, or where their order is',
+        props: {
+          pointA: s.object('starting point latitude and longitude', {
+            lat: s.number('latitude of the destination location'),
+            long: s.number('longitude of the destination location'),
+          }),
+          pointB: s.object('destination latitude and longitude', {
+            lat: s.number('latitude of the destination location'),
+            long: s.number('longitude of the destination location'),
+          }),
+        },
       }),
     ],
   })
@@ -46,16 +55,6 @@ function App() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (inputValue.trim()) {
-      const query = inputValue.trim().toLowerCase()
-      
-      // Check if user is asking about order status
-      const orderStatusKeywords = ['order status', 'where is my order', 'delivery', 'tracking', 'my order']
-      const isOrderStatusQuery = orderStatusKeywords.some(keyword => query.includes(keyword))
-      
-      if (isOrderStatusQuery) {
-        setShowMap(true)
-      }
-      
       chat.sendMessage({
         role: 'user',
         content: inputValue.trim(),
@@ -102,23 +101,6 @@ function App() {
           />
         </form>
         {message ? <div className="assistant">{message.ui}</div> : null}
-        
-        {/* Show MapComponent when user asks about order status */}
-        {showMap && (
-          <div className="mt-8 w-full">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-              <h2 className="text-lg font-semibold text-blue-800 mb-2">📍 Your Order Status</h2>
-              <p className="text-blue-700">Your food is on the way! Here's your delivery route:</p>
-            </div>
-            <MapComponent />
-            <button 
-              onClick={() => setShowMap(false)}
-              className="mt-4 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-            >
-              Hide Map
-            </button>
-          </div>
-        )}
       </div>
     </div>
   )
