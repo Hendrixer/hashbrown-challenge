@@ -226,18 +226,13 @@ export const useChatTools = () => {
 
   const browseRestaurantsTool = useTool({
     name: 'browseRestaurants',
-    description:
-      'Browse available restaurants with optional filtering by rating, price level, or location',
+    description: 'Get a list of restaurants',
     schema: s.object('browseRestaurantsInput', {
-      minRating: s.anyOf([s.number('Minimum rating (1-5)'), s.nullish()]),
-      maxPriceLevel: s.anyOf([
-        s.number('Maximum price level (1-4, where 1=$ and 4=$$$$)'),
-        s.nullish(),
-      ]),
-      limit: s.anyOf([
-        s.number('Maximum number of restaurants to return'),
-        s.nullish(),
-      ]),
+      minRating: s.number('Minimum rating (1-5)'),
+      maxPriceLevel: s.number(
+        'Maximum price level (1-4, where 1=$ and 4=$$$$)'
+      ),
+      limit: s.number('Maximum number of restaurants to return'),
     }),
     handler: async ({ minRating, maxPriceLevel, limit }) => {
       let filteredRestaurants = portlandBreakfastRestaurants
@@ -253,25 +248,8 @@ export const useChatTools = () => {
           (r) => r.priceLevel <= maxPriceLevel
         )
       }
-
-      const restaurants = filteredRestaurants
-        .slice(0, limit || 10)
-        .map((r) => ({
-          id: r.id,
-          name: r.name,
-          description: r.description,
-          rating: r.rating,
-          priceLevel: '$'.repeat(r.priceLevel),
-          address: r.address,
-          phone: r.phone,
-        }))
-
-      return `Found ${restaurants.length} restaurants:\n\n${restaurants
-        .map(
-          (r) =>
-            `${r.id}. **${r.name}** (${r.rating}⭐, ${r.priceLevel})\n   ${r.description}\n   📍 ${r.address}\n   📞 ${r.phone}`
-        )
-        .join('\n\n')}`
+      const restaurants = filteredRestaurants.slice(0, limit || 20)
+      return restaurants
     },
     deps: [],
   })
@@ -324,12 +302,9 @@ export const useChatTools = () => {
       'Search for menu items across all restaurants by name or description',
     schema: s.object('searchMenuItemsInput', {
       query: s.string('Search query for menu item name or description'),
-      maxPrice: s.anyOf([s.number('Maximum price filter'), s.nullish()]),
-      category: s.anyOf([s.string('Category filter'), s.nullish()]),
-      limit: s.anyOf([
-        s.number('Maximum number of items to return'),
-        s.nullish(),
-      ]),
+      maxPrice: s.number('Maximum price filter'),
+      category: s.string('Category filter'),
+      limit: s.number('Maximum number of items to return'),
     }),
     handler: async ({ query, maxPrice, category, limit }) => {
       const allItems = portlandBreakfastRestaurants.flatMap((restaurant) =>
@@ -379,7 +354,8 @@ export const useChatTools = () => {
 
   const tripDurationTool = useTool({
     name: 'getTripDuration',
-    description: 'Get the driving duration and distance between two points using the OrderDetails component. This component shows the estimated time and distance for a trip by car.',
+    description:
+      'Get the driving duration and distance between two points using the OrderDetails component. This component shows the estimated time and distance for a trip by car.',
     schema: s.object('getTripDurationInput', {
       pointA: s.object('pointA', {
         lat: s.number('Latitude of the starting point'),
@@ -401,26 +377,27 @@ export const useChatTools = () => {
 
   const trackOrderStatusTool = useTool({
     name: 'trackOrderStatus',
-    description: 'Track order status with delivery location details. Use this when users ask about their order status, delivery tracking, or where their order is.',
+    description:
+      'Track order status with delivery location details. Use this when users ask about their order status, delivery tracking, or where their order is.',
     schema: s.object('trackOrderStatusInput', {
       orderId: s.anyOf([s.string('Order ID to track'), s.nullish()]),
     }),
     handler: async ({ orderId }) => {
       // For now, return mock data with Portland restaurant locations
       // In a real app, you would look up the actual order details from a database
-      
+
       // Sample restaurant location (Rose City Morning from restaurants data)
       const startLocation = {
         lat: 45.5122,
-        long: -122.6587
+        long: -122.6587,
       }
-      
+
       // Sample delivery location (somewhere in Portland)
       const destinationLocation = {
         lat: 45.5289,
-        long: -122.6984
+        long: -122.6984,
       }
-      
+
       return {
         startLatitude: startLocation.lat,
         startLongitude: startLocation.long,
@@ -428,7 +405,9 @@ export const useChatTools = () => {
         destinationLongitude: destinationLocation.long,
         status: 'in-progress',
         orderId: orderId || 'ORD-123456',
-        message: `Order ${orderId || 'ORD-123456'} is currently in-progress. Your driver is on the way!`
+        message: `Order ${
+          orderId || 'ORD-123456'
+        } is currently in-progress. Your driver is on the way!`,
       }
     },
     deps: [],

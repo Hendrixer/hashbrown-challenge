@@ -9,12 +9,14 @@ import OrderDetails from './components/OrderDetails'
 import Cart from './components/Cart'
 import OrderHistory from './components/OrderHistory'
 import { AppProvider } from './context/AppContext'
+import RestaurantsView from './components/RestaurantsView'
 
 function App() {
   const [inputValue, setInputValue] = useState('')
   const tools = useChatTools()
   const chat = useUiChat({
     model: 'gpt-4.1',
+    debugName: 'hashbrown',
     system: `You are a helpful food delivery assistant. When users ask about their order status, delivery tracking, or "where is my order", you should:
     1. Use the showOrderStatus tool to display the delivery map
     2. Or render the MapComponent to show their delivery route
@@ -54,15 +56,60 @@ function App() {
         description:
           'Display order status information with delivery time estimates. Use this when users ask about their order status or delivery timeline.',
         props: {
-          pointA: s.object('starting point (restaurant) latitude and longitude', {
-            lat: s.number('latitude of the restaurant location'),
-            long: s.number('longitude of the restaurant location'),
-          }),
+          pointA: s.object(
+            'starting point (restaurant) latitude and longitude',
+            {
+              lat: s.number('latitude of the restaurant location'),
+              long: s.number('longitude of the restaurant location'),
+            }
+          ),
           pointB: s.object('destination (delivery) latitude and longitude', {
             lat: s.number('latitude of the delivery location'),
             long: s.number('longitude of the delivery location'),
           }),
-          status: s.string('Order status: preparing, in-progress, on-the-way, delivered, or cancelled'),
+          status: s.string(
+            'Order status: preparing, in-progress, on-the-way, delivered, or cancelled'
+          ),
+        },
+      }),
+      exposeComponent(RestaurantsView, {
+        name: 'Restaurants',
+        description: 'Use to show a list of restaurants',
+        props: {
+          restaurants: s.array(
+            'restaurants',
+            s.object('restaurant', {
+              id: s.number('Restaurant ID'),
+              name: s.string('Restaurant name'),
+              description: s.string('Restaurant description'),
+              address: s.string('Restaurant address'),
+              latitude: s.number('Latitude coordinate'),
+              longitude: s.number('Longitude coordinate'),
+              phone: s.string('Phone number'),
+              rating: s.number('Restaurant rating (1-5)'),
+              priceLevel: s.number('Price level (1-4, where 1=$ and 4=$$$$)'),
+              menuItems: s.array(
+                'menuItems',
+                s.object('menuItem', {
+                  id: s.string('Menu item ID'),
+                  name: s.string('Item name'),
+                  description: s.string('Item description'),
+                  price: s.number('Item price'),
+                  category: s.enumeration(
+                    'Item category: Pancakes & Waffles, Eggs & Benedicts, Pastries & Baked Goods, Sandwiches & Wraps, Beverages, or Sides',
+                    [
+                      'Pancakes & Waffles',
+                      'Eggs & Benedicts',
+                      'Pastries & Baked Goods',
+                      'Sandwiches & Wraps',
+                      'Beverages',
+                      'Sides',
+                    ]
+                  ),
+                })
+              ),
+            })
+          ),
         },
       }),
     ],
